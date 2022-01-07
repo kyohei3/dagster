@@ -82,6 +82,7 @@ def main(quiet):
         "-r scala_modules/scripts/requirements.txt",
         "-e python_modules/libraries/dagster-azure",
         "-e python_modules/libraries/dagster-msteams",
+        "-e python_modules/libraries/dagster-mlflow",
         "-e helm/dagster/schema[test]",
     ]
 
