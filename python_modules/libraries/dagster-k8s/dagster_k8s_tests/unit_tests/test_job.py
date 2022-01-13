@@ -31,7 +31,7 @@ def test_job_serialization():
 def test_user_defined_k8s_config_serialization():
     cfg = UserDefinedDagsterK8sConfig(
         container_config={
-            "resouces": {
+            "resources": {
                 "requests": {"cpu": "250m", "memory": "64Mi"},
                 "limits": {"cpu": "500m", "memory": "2560Mi"},
             }
@@ -377,6 +377,7 @@ def test_construct_dagster_k8s_job_with_ttl():
         instance_config_map="test",
     )
     job = construct_dagster_k8s_job(cfg, [], "job123").to_dict()
+
     assert job["spec"]["ttl_seconds_after_finished"] == DEFAULT_K8S_JOB_TTL_SECONDS_AFTER_FINISHED
 
     user_defined_cfg = UserDefinedDagsterK8sConfig(

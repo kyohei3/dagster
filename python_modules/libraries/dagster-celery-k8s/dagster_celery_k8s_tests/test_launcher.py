@@ -341,6 +341,7 @@ def test_user_defined_k8s_config_in_run_tags(kubeconfig_file):
             assert method_name == "create_namespaced_job"
             job_resources = kwargs["body"].spec.template.spec.containers[0].resources
             assert job_resources == expected_resources
+            assert job_resources.to_dict() == expected_resources
 
 
 def test_k8s_executor_config_override(kubeconfig_file):

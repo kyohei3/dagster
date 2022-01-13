@@ -78,7 +78,7 @@ def test_user_defined_k8s_config_in_run_tags(kubeconfig_file):
         method_name, _args, kwargs = mock_method_calls[0]
         assert method_name == "create_namespaced_job"
         job_resources = kwargs["body"].spec.template.spec.containers[0].resources
-        assert job_resources == expected_resources
+        assert job_resources.to_dict() == expected_resources
         assert DAGSTER_PG_PASSWORD_ENV_VAR in [
             env.name for env in kwargs["body"].spec.template.spec.containers[0].env
         ]
