@@ -35,7 +35,7 @@ import {
   queuedStatuses,
   successStatuses,
 } from '../runs/RunStatuses';
-import {RunTimelineContainer} from '../runs/RunTimeline';
+import {RunTimelineContainer, TimelineJob, makeJobKey, HourWindow} from '../runs/RunTimeline';
 import {RunElapsed, RunTime, RUN_TIME_FRAGMENT} from '../runs/RunUtils';
 import {RunTimeFragment} from '../runs/types/RunTimeFragment';
 import {SCHEDULE_SWITCH_FRAGMENT} from '../schedules/ScheduleSwitch';
@@ -46,6 +46,7 @@ import {useRepositoryOptions} from '../workspace/WorkspaceContext';
 import {buildRepoAddress} from '../workspace/buildRepoAddress';
 import {repoAddressAsString} from '../workspace/repoAddressAsString';
 import {RepoAddress} from '../workspace/types';
+import {workspacePipelinePath} from '../workspace/workspacePath';
 
 import {InstanceTabs} from './InstanceTabs';
 import {JobMenu} from './JobMenu';
@@ -80,10 +81,6 @@ const intent = (status: RunStatus) => {
     default:
       return 'none';
   }
-};
-
-const makeJobKey = (repoAddress: RepoAddress, jobName: string) => {
-  return `${jobName}-${repoAddressAsString(repoAddress)}`;
 };
 
 type JobItem = {
@@ -286,6 +283,12 @@ const OverviewContent = () => {
     return flattened;
   }, [lastTenRunsData]);
 
+  const filteredJobsFlattened: JobItem[] = React.useMemo(() => {
+    return Object.values(filteredJobs).reduce((accum, jobList) => {
+      return [...accum, ...jobList];
+    }, []);
+  }, [filteredJobs]);
+
   const filteredJobsWithRuns = React.useMemo(() => {
     const appendRuns = (jobItem: JobItem) => {
       const {job, repoAddress} = jobItem;
@@ -373,7 +376,7 @@ const OverviewContent = () => {
           style={{width: '340px'}}
         />
       </Box>
-      <RunTimelineSection />
+      <RunTimelineSection jobs={filteredJobsFlattened} loading={loading} />
       {inProgress.length ? (
         <JobSection
           icon={<IconWIP name="hourglass_bottom" color={ColorsWIP.Blue500} size={24} />}
@@ -417,19 +420,21 @@ const OverviewContent = () => {
   );
 };
 
-type HourWindow = '1' | '6' | '12' | '24';
-const LOOKAHEAD_HOURS = 1;
-const ONE_HOUR = 60 * 60 * 1000;
-
-const RunTimelineSection = () => {
+const RunTimelineSection = ({jobs, loading}: {jobs: JobItem[]; loading: boolean}) => {
   const [shown, setShown] = React.useState(true);
   const [hourWindow, setHourWindow] = React.useState<HourWindow>('6');
-  const now = Date.now();
 
-  const range: [number, number] = React.useMemo(
-    () => [now - Number(hourWindow) * ONE_HOUR, now + LOOKAHEAD_HOURS * ONE_HOUR],
-    [hourWindow, now],
-  );
+  const timelineJobs: TimelineJob[] = jobs.map((job) => ({
+    key: makeJobKey(job.repoAddress, job.job.name),
+    jobName: job.job.name,
+    path: workspacePipelinePath({
+      repoName: job.repoAddress.name,
+      repoLocation: job.repoAddress.location,
+      pipelineName: job.job.name,
+      isJob: job.job.isJob,
+    }),
+    runs: [],
+  }));
 
   return (
     <>
@@ -464,7 +469,9 @@ const RunTimelineSection = () => {
           </ButtonWIP>
         </Box>
       </Box>
-      {shown ? <RunTimelineContainer range={range} /> : null}
+      {shown ? (
+        <RunTimelineContainer hourWindow={hourWindow} jobs={timelineJobs} loading={loading} />
+      ) : null}
     </>
   );
 };
