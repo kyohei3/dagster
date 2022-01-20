@@ -46,43 +46,18 @@ export type TimelineJob = {
   runs: TimelineRun[];
 };
 
-const LOOKAHEAD_HOURS = 1;
-const ONE_HOUR = 60 * 60 * 1000;
-export type HourWindow = '1' | '6' | '12' | '24';
-
 export const makeJobKey = (repoAddress: RepoAddress, jobName: string) => {
   return `${jobName}-${repoAddressAsString(repoAddress)}`;
 };
 
 export const RunTimelineContainer = ({
-  hourWindow,
+  range,
   jobs,
-  loading,
 }: {
-  hourWindow: HourWindow;
+  range: [number, number];
   jobs: TimelineJob[];
-  loading: boolean;
 }) => {
-  const nowRef = React.useRef(Date.now());
-
-  React.useEffect(() => {
-    if (!loading) {
-      nowRef.current = Date.now();
-    }
-  }, [loading]);
-
-  const now = nowRef.current;
-  const range: [number, number] = React.useMemo(() => {
-    return [now - Number(hourWindow) * ONE_HOUR, now + LOOKAHEAD_HOURS * ONE_HOUR];
-  }, [hourWindow, now]);
-
-  const [start, end] = React.useMemo(() => {
-    const [unvalidatedStart, unvalidatedEnd] = range;
-    return unvalidatedEnd < unvalidatedStart
-      ? [unvalidatedEnd, unvalidatedStart]
-      : [unvalidatedStart, unvalidatedEnd];
-  }, [range]);
-
+  const [start, end] = range;
   const {data} = useQuery<RunTimelineQuery, RunTimelineQueryVariables>(RUN_TIMELINE_QUERY, {
     fetchPolicy: 'network-only',
     notifyOnNetworkStatusChange: true,

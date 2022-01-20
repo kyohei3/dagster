@@ -35,7 +35,7 @@ import {
   queuedStatuses,
   successStatuses,
 } from '../runs/RunStatuses';
-import {RunTimelineContainer, TimelineJob, makeJobKey, HourWindow} from '../runs/RunTimeline';
+import {RunTimelineContainer, TimelineJob, makeJobKey} from '../runs/RunTimeline';
 import {RunElapsed, RunTime, RUN_TIME_FRAGMENT} from '../runs/RunUtils';
 import {RunTimeFragment} from '../runs/types/RunTimeFragment';
 import {SCHEDULE_SWITCH_FRAGMENT} from '../schedules/ScheduleSwitch';
@@ -420,9 +420,32 @@ const OverviewContent = () => {
   );
 };
 
+const LOOKAHEAD_HOURS = 1;
+const ONE_HOUR = 60 * 60 * 1000;
+type HourWindow = '1' | '6' | '12' | '24';
+
 const RunTimelineSection = ({jobs, loading}: {jobs: JobItem[]; loading: boolean}) => {
   const [shown, setShown] = React.useState(true);
   const [hourWindow, setHourWindow] = React.useState<HourWindow>('6');
+  const nowRef = React.useRef(Date.now());
+
+  React.useEffect(() => {
+    if (!loading) {
+      nowRef.current = Date.now();
+    }
+  }, [loading]);
+
+  const now = nowRef.current;
+  const range: [number, number] = React.useMemo(() => {
+    return [now - Number(hourWindow) * ONE_HOUR, now + LOOKAHEAD_HOURS * ONE_HOUR];
+  }, [hourWindow, now]);
+
+  const [start, end] = React.useMemo(() => {
+    const [unvalidatedStart, unvalidatedEnd] = range;
+    return unvalidatedEnd < unvalidatedStart
+      ? [unvalidatedEnd, unvalidatedStart]
+      : [unvalidatedStart, unvalidatedEnd];
+  }, [range]);
 
   const timelineJobs: TimelineJob[] = jobs.map((job) => ({
     key: makeJobKey(job.repoAddress, job.job.name),
@@ -469,9 +492,7 @@ const RunTimelineSection = ({jobs, loading}: {jobs: JobItem[]; loading: boolean}
           </ButtonWIP>
         </Box>
       </Box>
-      {shown ? (
-        <RunTimelineContainer hourWindow={hourWindow} jobs={timelineJobs} loading={loading} />
-      ) : null}
+      {shown ? <RunTimelineContainer range={[start, end]} jobs={timelineJobs} /> : null}
     </>
   );
 };
