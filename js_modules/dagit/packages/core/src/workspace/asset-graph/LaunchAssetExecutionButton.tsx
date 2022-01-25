@@ -1,6 +1,7 @@
 import {ButtonWIP, IconWIP, Tooltip} from '@dagster-io/ui';
 import React from 'react';
 
+import {AssetKey} from '../../assets/types';
 import {LaunchRootExecutionButton} from '../../launchpad/LaunchRootExecutionButton';
 import {RepoAddress} from '../types';
 
@@ -16,8 +17,9 @@ export const LaunchAssetExecutionButton: React.FC<{
   repoAddress: RepoAddress;
   assetJobName: string;
   assets: AssetMinimal[];
+  upstreamAssetKeys: AssetKey[];
   title?: string;
-}> = ({repoAddress, assets, assetJobName, title}) => {
+}> = ({repoAddress, assets, assetJobName, upstreamAssetKeys, title}) => {
   const [showingPartitionDialog, setShowingPartitionDialog] = React.useState(false);
 
   let disabledReason = '';
@@ -53,6 +55,7 @@ export const LaunchAssetExecutionButton: React.FC<{
           <LaunchAssetChoosePartitionsDialog
             assets={assets}
             assetJobName={assetJobName}
+            upstreamAssetKeys={upstreamAssetKeys}
             repoAddress={repoAddress}
             open={showingPartitionDialog}
             setOpen={setShowingPartitionDialog}
