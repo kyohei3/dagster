@@ -39,8 +39,10 @@ from dagster import op, Output
 def my_materialization_op(context):
     df = read_df()
     remote_storage_path = persist_to_storage(df)
-    yield AssetMaterialization(asset_key="my_dataset", description="Persisted result to storage")
-    yield Output(remote_storage_path)
+    context.log_event(
+        AssetMaterialization(asset_key="my_dataset", description="Persisted result to storage")
+    )
+    return remote_storage_path
 
 
 # end_materialization_ops_marker_1
@@ -53,8 +55,8 @@ from dagster import op, Output, AssetMaterialization
 def my_asset_op(context):
     df = read_df()
     persist_to_storage(df)
-    yield AssetMaterialization(asset_key="my_dataset")
-    yield Output(df)
+    context.log_event(AssetMaterialization(asset_key="my_dataset"))
+    return df
 
 
 # end_simple_asset_op
@@ -99,8 +101,8 @@ def my_partitioned_asset_op(context):
     partition_date = context.op_config["date"]
     df = read_df_for_date(partition_date)
     remote_storage_path = persist_to_storage(df)
-    yield AssetMaterialization(asset_key="my_dataset", partition=partition_date)
-    yield Output(remote_storage_path)
+    context.log_event(AssetMaterialization(asset_key="my_dataset", partition=partition_date))
+    return remote_storage_path
 
 
 # end_partitioned_asset_materialization
@@ -114,17 +116,19 @@ from dagster import op, AssetMaterialization, Output, EventMetadata
 def my_metadata_materialization_op(context):
     df = read_df()
     remote_storage_path = persist_to_storage(df)
-    yield AssetMaterialization(
-        asset_key="my_dataset",
-        description="Persisted result to storage",
-        metadata={
-            "text_metadata": "Text-based metadata for this event",
-            "path": EventMetadata.path(remote_storage_path),
-            "dashboard_url": EventMetadata.url("http://mycoolsite.com/url_for_my_data"),
-            "size (bytes)": calculate_bytes(df),
-        },
+    context.log_event(
+        AssetMaterialization(
+            asset_key="my_dataset",
+            description="Persisted result to storage",
+            metadata={
+                "text_metadata": "Text-based metadata for this event",
+                "path": EventMetadata.path(remote_storage_path),
+                "dashboard_url": EventMetadata.url("http://mycoolsite.com/url_for_my_data"),
+                "size (bytes)": calculate_bytes(df),
+            },
+        )
     )
-    yield Output(remote_storage_path)
+    return remote_storage_path
 
 
 # end_materialization_ops_marker_2
@@ -138,15 +142,17 @@ from dagster import op, AssetMaterialization, job
 def my_asset_key_materialization_op(context):
     df = read_df()
     remote_storage_path = persist_to_storage(df)
-    yield AssetMaterialization(
-        asset_key=AssetKey(["dashboard", "my_cool_site"]),
-        description="Persisted result to storage",
-        metadata={
-            "dashboard_url": EventMetadata.url("http://mycoolsite.com/dashboard"),
-            "size (bytes)": calculate_bytes(df),
-        },
+    context.log(
+        AssetMaterialization(
+            asset_key=AssetKey(["dashboard", "my_cool_site"]),
+            description="Persisted result to storage",
+            metadata={
+                "dashboard_url": EventMetadata.url("http://mycoolsite.com/dashboard"),
+                "size (bytes)": calculate_bytes(df),
+            },
+        )
     )
-    yield Output(remote_storage_path)
+    return remote_storage_path
 
 
 # end_materialization_ops_marker_3
