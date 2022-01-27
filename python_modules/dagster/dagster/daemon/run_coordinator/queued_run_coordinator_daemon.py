@@ -125,7 +125,7 @@ class QueuedRunCoordinatorDaemon(IntervalDaemon):
         queued_runs = self._get_queued_runs(instance)
 
         if not queued_runs:
-            self._logger.info("Poll returned no queued runs.")
+            self._logger.debug("Poll returned no queued runs.")
         else:
             self._logger.info("Retrieved {} queued runs, checking limits.".format(len(queued_runs)))
 
