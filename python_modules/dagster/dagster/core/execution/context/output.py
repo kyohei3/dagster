@@ -402,8 +402,6 @@ class OutputContext:
     def log_event(
         self, event: Union[AssetObservation, AssetMaterialization, Materialization]
     ) -> None:
-        from dagster.core.events import DagsterEvent
-
         """Log an AssetMaterialization, AssetObservation, or ExpectationResult from within the body of an io manager's `handle_output` method.
 
         Events logged with this method will appear in the list of DagsterEvents, as well as the event log.
@@ -420,6 +418,7 @@ class OutputContext:
                 def handle_output(self, context, obj):
                     context.log_event(AssetMaterialization("foo"))
         """
+        from dagster.core.events import DagsterEvent
 
         if isinstance(event, (AssetMaterialization, Materialization)):
             if self._step_context:
@@ -438,7 +437,7 @@ class OutputContext:
         else:
             check.failed("Unexpected event {event}".format(event=event))
 
-    def retrieve_events(self) -> Iterator[DagsterEvent]:
+    def retrieve_events(self) -> Iterator["DagsterEvent"]:
         while self._events:
             yield self._events.pop(0)
 
